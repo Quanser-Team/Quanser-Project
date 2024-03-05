@@ -73,7 +73,7 @@ equilibrium = [0 == dx] ;
 % Operating Point
 x1_bar = 0 ;
 x2_bar = 0 ;
-x3_bar = 0 ;
+x3_bar = pi ;    % phi_bar 
 x4_bar = 0 ;
 
 systeqs = subs(equilibrium, [x1 x2 x3 x4], [x1_bar x2_bar x3_bar x4_bar]) ;
@@ -129,16 +129,46 @@ D = [0;
 
 A = double(A) ;
 B = double(B) ;
-
 G_ol = tf(ss(A, B, C, D)) 
+figure
 bode(G_ol)
-pole(G_ol)
+
+%% regolatore theta  %%
+pole(G_ol(1))   % see how many unstable poles
+G_ol(1)
+% see the model Properties of the G_ol(1) si extract the num and den for
+% Simulink block
+
+opts = pidtuneOptions('PhaseMargin',90,'DesignFocus','reference-tracking') ;
+R_theta = pidtune(G_ol(1), 'PID', 1e3, opts) 
+%L= R_theta*G_ol(1);
+figure
+%step(L/(1+L))
+step(feedback(R_theta*G_ol(1), 1))  % compact form
+Kp_theta = R_theta.Kp ;
+Ki_theta = R_theta.Ki ;
+Kd_theta = R_theta.Kd ;
+
+%% Regolatore phi %%
+
+G_t2p = G_ol(2) / G_ol(1)
+pole(G_t2p)     %see how many unstable poles
+
+opts = pidtuneOptions('PhaseMargin',60,'DesignFocus','reference-tracking') ;
+R_phi = pidtune(G_t2p, 'PID', 100, opts)
+figure
+step(feedback(R_phi*G_t2p, 1))
+Kp_phi = R_phi.Kp ;
+Ki_phi = R_phi.Ki ;
+Kd_phi = R_phi.Kd ;
+
 
 %% Linearized Model (ALternative way!) %%
-% directly form the Simulink Model extract the Linearized Model using 'linmod'
-
-[A, B, C, D] = linmod('dyn_model') ;
-G_ol = tf(ss(A, B, C, D)) 
-bode (G_ol)
-
-Gtp = G_ol(2) * (1/G_ol(1)) ;     % G(s) from theta to phi
+% % directly form the Simulink Model extract the Linearized Model using 'linmod'
+% 
+% [A, B, C, D] = linmod('dyn_model') ;
+% G_ol = tf(ss(A, B, C, D)) 
+% figure
+% bode (G_ol)
+% 
+% Gtp = G_ol(2) * (1/G_ol(1)) ;     % G(s) from theta to phi
