@@ -132,15 +132,18 @@ B = double(B) ;
 G_ol = tf(ss(A, B, C, D)) 
 figure
 bode(G_ol)
+eig(A)
 
 %% regolatore theta  %%
 pole(G_ol(1))   % see how many unstable poles
 G_ol(1)
 % see the model Properties of the G_ol(1) si extract the num and den for
 % Simulink block
+num_theta = cell2mat(G_ol.Numerator(1,1))
+den_theta = cell2mat(G_ol.Denominator(1,1))
 
-opts = pidtuneOptions('PhaseMargin',90,'DesignFocus','reference-tracking') ;
-R_theta = pidtune(G_ol(1), 'PID', 1e3, opts) 
+opts = pidtuneOptions('PhaseMargin', 90) ;
+R_theta = pidtune(G_ol(1), 'PID', 1e3 , opts) 
 %L= R_theta*G_ol(1);
 figure
 %step(L/(1+L))
@@ -150,14 +153,20 @@ Ki_theta = R_theta.Ki ;
 Kd_theta = R_theta.Kd ;
 
 %% Regolatore phi %%
-
+s = tf('s') ;
 G_t2p = G_ol(2) / G_ol(1)
+%figure
+%bode(G_t2p)
+num_phi = cell2mat(G_t2p.Numerator)
+den_phi = cell2mat(G_t2p.Denominator)
 pole(G_t2p)     %see how many unstable poles
 
-opts = pidtuneOptions('PhaseMargin',60,'DesignFocus','reference-tracking') ;
-R_phi = pidtune(G_t2p, 'PID', 100, opts)
+opts = pidtuneOptions('PhaseMargin',60 , 'DesignFocus', 'disturbance-rejection') ;
+R_phi = pidtune(G_t2p, 'PID', 1e2, opts)
 figure
 step(feedback(R_phi*G_t2p, 1))
+% figure
+% bode (R_phi*G_t2p)
 Kp_phi = R_phi.Kp ;
 Ki_phi = R_phi.Ki ;
 Kd_phi = R_phi.Kd ;
@@ -172,3 +181,31 @@ Kd_phi = R_phi.Kd ;
 % bode (G_ol)
 % 
 % Gtp = G_ol(2) * (1/G_ol(1)) ;     % G(s) from theta to phi
+
+%% Pole Placement in phi_bar == 180 %%
+
+rank(ctrb(A,B))     % == 4 so OK!
+
+% Desired poles
+P = [-2 -5 -20 -30] ;
+K = place(A,B,P) ;
+eig(A-B*K)
+
+syst_cl = tf(ss(A-B*K,B,C,D))
+figure
+step(syst_cl)
+ss_gain = 1/dcgain(syst_cl) 
+
+%% %% Pole Placement in phi_bar == 0 %%
+
+rank(ctrb(A,B))     % == 4 so OK!
+
+% Desired poles
+P = [-0.5 -15 -25 -30] ;
+K = place(A,B,P) ;
+eig(A-B*K)
+
+syst_cl = tf(ss(A-B*K,B,C,D))
+figure
+step(syst_cl)
+ss_gain = 1/dcgain(syst_cl) 
