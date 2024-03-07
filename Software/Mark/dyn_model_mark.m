@@ -219,3 +219,22 @@ syst_cl = tf(ss(A-B*K,B,C,D))
 figure
 step(syst_cl)
 ss_gain = 1/dcgain(syst_cl) 
+
+
+
+%% KALMAN FILTER
+% for the estimation of phi_dot (theta_dot is given by encoder)
+%analog procedure of pole placement to find L
+
+
+Ob = obsv(A,C);         %check on the observability
+rank_Ob= rank(Ob);
+P_filter= [-10 -30 -200 -300];               %poli dell'observer, quelli del PPx10
+L = (place(A',C',P))' ;
+
+
+
+
+
+
+
