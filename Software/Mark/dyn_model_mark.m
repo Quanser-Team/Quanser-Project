@@ -5,6 +5,8 @@ clc
 
 %% PARAMETERS %% 
 
+% syms mr mp Lr Lp Ir Ip g0 La Ra J k
+%%
 % Rod %
 mr = 0.095 ;    % kg
 Lr = 0.085 ;    % m
@@ -134,6 +136,13 @@ figure
 bode(G_ol)
 eig(A)
 
+%% DElay
+
+s = tf('s') ;
+tau = 0 ;
+delay = exp(-tau*s) ;
+delay_tf = pade(delay, 1) ;
+
 %% regolatore theta  %%
 pole(G_ol(1))   % see how many unstable poles
 G_ol(1)
@@ -142,12 +151,13 @@ G_ol(1)
 num_theta = cell2mat(G_ol.Numerator(1,1))
 den_theta = cell2mat(G_ol.Denominator(1,1))
 
-opts = pidtuneOptions('PhaseMargin', 90) ;
-R_theta = pidtune(G_ol(1), 'PID', 1e3 , opts) 
+opts = pidtuneOptions('PhaseMargin', 60) ;
+R_theta = pidtune(delay*G_ol(1), 'PID', 30 , opts) 
 %L= R_theta*G_ol(1);
 figure
 %step(L/(1+L))
 step(feedback(R_theta*G_ol(1), 1))  % compact form
+% impulse(feedback(R_theta*G_ol(1), 1))     %impulse
 Kp_theta = R_theta.Kp ;
 Ki_theta = R_theta.Ki ;
 Kd_theta = R_theta.Kd ;
@@ -162,7 +172,7 @@ den_phi = cell2mat(G_t2p.Denominator)
 pole(G_t2p)     %see how many unstable poles
 
 opts = pidtuneOptions('PhaseMargin',60 , 'DesignFocus', 'disturbance-rejection') ;
-R_phi = pidtune(G_t2p, 'PID', 1e2, opts)
+R_phi = pidtune(G_t2p, 'PID', 3, opts)
 figure
 step(feedback(R_phi*G_t2p, 1))
 % figure
@@ -187,7 +197,7 @@ Kd_phi = R_phi.Kd ;
 rank(ctrb(A,B))     % == 4 so OK!
 
 % Desired poles
-P = [-2 -5 -20 -30] ;
+P = [-1 -3 -20 -30] ;
 K = place(A,B,P) ;
 eig(A-B*K)
 
