@@ -1,0 +1,6 @@
+LAB 11/03
+
+Tracking a square wave as reference for theta with just a proportional gain, using the Non Lin Dyn Model:
+-Gain = 10
+-ampl = 20°
+-f = 0.01
