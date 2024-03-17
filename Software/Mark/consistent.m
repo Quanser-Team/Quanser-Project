@@ -10,11 +10,11 @@ clc
 % Rod %
 mr = 0.095 ;    % kg
 Lr = 0.085 ;    % m
-Ir = (mr*(Lr/2)^2)/12 ; % = 1.4299e-05 kg*m^2
+Ir = (mr*Lr^2)/12 ; % = 2.2879e-04 kg*m^2 using Huyhens-Steiner
 % Pendulum %
 mp = 0.024 ;    % kg
 Lp = 0.129 ;    % m !!! mind that in the eqs I consider already the half
-Ip = (mp*(Lp/2)^2)/12 ; % = 8.3205e-06 kg*m^2
+Ip = (mp*Lp^2)/12 ; % = 8.3205e-06 kg*m^2
 % gravity acc %
 g0 = 9.81 ; % m/s^2
 

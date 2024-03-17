@@ -10,11 +10,13 @@ clc
 % Rod %
 mr = 0.095 ;    % kg
 Lr = 0.085 ;    % m
-Ir = (mr*(Lr/2)^2)/12 ; % = 1.4299e-05 kg*m^2
+Ir = (mr*Lr^2)/3 ; % = 2.2879e-04 kg*m^2 using Huyhens-Steiner
+% Ir=4.7912e-05 from Renzo
 % Pendulum %
 mp = 0.024 ;    % kg
+Lp_whole = 0.129 ;  %whole length of the pendulum
 Lp = 0.129/2 ;    % m !!! mind that in the eqs I consider already the half
-Ip = (mp*Lp^2)/12 ; % = 8.3205e-06 kg*m^2
+Ip = (mp*Lp_whole^2)/12 ; % = 8.3205e-06 kg*m^2
 % gravity acc %
 g0 = 9.81 ; % m/s^2
 
@@ -27,6 +29,12 @@ k = 42e-3 ;     % N*m/A
 param = [mr mp Lr Lp Ir Ip g0 La Ra k]' ;
 
 syms theta theta_dot theta_ddot phi phi_dot phi_ddot Va
+
+% Initial state
+theta_init = 0 ;
+theta_dot_init = 0 ;
+phi_init = pi ;
+phi_dot_init = 0 ;
 
 % DYN MODEL %%
 
@@ -48,7 +56,7 @@ syms theta theta_dot theta_ddot phi phi_dot phi_ddot Va
 % NT: the phi starts at the upper side and >0 C.W. and theta is >0 C.C.W.
 % BUT! in the physical model the phi and theta are measured in different
 % way so pay attention on the reference vauels for them !!!
-H = [(mr*(Lr/2)^2)+(mp*(Lr^2+(Lp^2*(sin(phi))^2)))+Ir            mp*Lr*Lp*cos(phi);
+H = [Ir+(mp*(Lr^2+(Lp^2*(sin(phi))^2)))            mp*Lr*Lp*cos(phi);
                      mp*Lr*Lp*cos(phi)                              (mp*Lp^2)+Ip] ;
 
 Q = [mp*Lp^2*sin(phi)*cos(phi)*phi_dot                      (mp*Lp^2*sin(phi)*cos(phi)*theta_dot)-(mp*Lr*Lp*sin(phi)*phi_dot);
@@ -73,8 +81,7 @@ dx4 = syst(2) ;
 
 dx = [dx1 dx2 dx3 dx4]' ;
 
-x0 = [0 0 pi 0] ;
-setInitialConditions('experiment_1.slxc',x0);
+
 
 
 %% Equilibria %%
@@ -233,24 +240,39 @@ ss_gain = 1/dcgain(syst_cl)
 
 
 
-%% KALMAN FILTER
+%% KALMAN FILTER - State Observer
 % for the estimation of phi_dot (theta_dot is given by encoder)
 %analog procedure of pole placement to find L
+%use this also to observe if using the Derivative block for theta_dot is
+%not too different than using the Tachometer
+
+Q_tilde = zeros(4) ;
+Q_tilde(1,1) = 0.05 ;   % measurment for theta
+Q_tilde(2,2) = 0.05 ;   % // for theta_dot
+Q_tilde(3,3) = 0.005 ;   % // for phi
+Q_tilde(4,4) = 0.5 ;   % // for phi_dot
+
+R_tilde = zeros(2,2) ;    
+R_tilde(1,1) = 0.001 ;   % da verificare
+R_tilde(2,2) = 0.001 ;
+
+Bq = sqrt(Q_tilde) ;
 
 
-Ob = obsv(A,C);         %check on the observability
-rank_Ob= rank(Ob);
-P_filter= [-10 -30 -200 -300];               %poli dell'observer, quelli del PPx10
-L = (place(A',C',P))' ;
+rank(obsv(A,C))         %check on the observability
+rank(ctrb(A,Bq))
 
-%% LQ %%
+L_kf = lqr(A',C',Q_tilde,R_tilde)'
+
+%% LQR %%
+close all
 Q = zeros(4) ;
-Q(1,1) = 10 ;   % q for theta
-Q(2,2) = 10 ;   % q for theta_dot
-Q(3,3) = 0.1 ;   % q for phi
-Q(4,4) = 10 ;   % q for phi_dot
+Q(1,1) = 50 ;   % q for theta
+Q(2,2) = 50 ;   % q for theta_dot
+Q(3,3) = 5 ;   % q for phi
+Q(4,4) = 1 ;   % q for phi_dot
 
-R = 10 ;
+R = 100 ;
 Cq = sqrt(Q) ;
 
 rank(ctrb(A,B))     % == 4 so OK!
@@ -271,3 +293,15 @@ nyquist(cl_lq)
 
 figure
 pzmap(cl_lq)
+
+%% Parameter Estimation %%
+load('exp_1_data.mat')
+t = angle(1,:)' ;
+theta_meas = angle(2,:)' ;
+phi_meas = angle(3,:)' ;
+
+figure
+subplot(2,1,1)
+plot(t, theta_meas)
+subplot(2,1,2)
+plot(t, phi_meas)
