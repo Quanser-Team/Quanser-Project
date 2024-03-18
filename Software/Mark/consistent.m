@@ -28,6 +28,12 @@ param = [mr mp Lr Lp Ir Ip g0]' ;
 
 syms theta theta_dot theta_ddot phi phi_dot phi_ddot Va
 
+% Initial state
+theta_init = 0 ;
+theta_dot_init = 0 ;
+phi_init = 0 ;
+phi_dot_init = 0 ;
+
 % DYN MODEL B,C,g %%
 
 % NT: the phi starts at the lower side and >0 C.C.W. and theta is >0 C.W.
@@ -65,7 +71,7 @@ equilibrium = [0 == dx] ;
 % Operating Point
 x1_bar = 0 ;
 x2_bar = 0 ;
-x3_bar = pi ;    % phi_bar 
+x3_bar = 0 ;    % phi_bar 
 x4_bar = 0 ;
 
 systeqs = subs(equilibrium, [x1 x2 x3 x4], [x1_bar x2_bar x3_bar x4_bar]) ;
@@ -137,7 +143,7 @@ delay_tf = pade(delay, 1) ;
 %% regolatore theta  %%
 pole(G_ol(1))   % see how many unstable poles
 G_ol(1)
-% see the model Properties of the G_ol(1) to extract the num and den for
+% see the model Properties of the G_ol(1) si extract the num and den for
 % Simulink block
 num_theta = cell2mat(G_ol.Numerator(1,1))
 den_theta = cell2mat(G_ol.Denominator(1,1))
@@ -165,6 +171,7 @@ pole(G_t2p)     %see how many unstable poles
 
 opts = pidtuneOptions('PhaseMargin',60 , 'DesignFocus', 'disturbance-rejection') ;
 R_phi = pidtune(G_t2p, 'PID', 3, opts)
+
 figure
 step(feedback(R_phi*G_t2p, 1))
 % figure
@@ -183,9 +190,6 @@ Kd_phi = R_phi.Kd ;
 % bode (G_ol)
 % 
 % Gtp = G_ol(2) * (1/G_ol(1)) ;     % G(s) from theta to phi
-
-% in this way you don't have control of the position of the states in the
-% vector state and how many of them
 
 %% Pole Placement in phi_bar == 180 %%
 
@@ -217,32 +221,47 @@ ss_gain = 1/dcgain(syst_cl)
 
 
 
-%% KALMAN FILTER
+%% KALMAN FILTER - State Observer
 % for the estimation of phi_dot (theta_dot is given by encoder)
 %analog procedure of pole placement to find L
+%use this also to observe if using the Derivative block for theta_dot is
+%not too different than using the Tachometer
+
+Q_tilde = zeros(4) ;
+Q_tilde(1,1) = 0.05 ;   % measurment for theta
+Q_tilde(2,2) = 0.05 ;   % // for theta_dot
+Q_tilde(3,3) = 0.05 ;   % // for phi
+Q_tilde(4,4) = 0.05 ;   % // for phi_dot
+
+R_tilde = zeros(2,2) ;    
+R_tilde(1,1) = 0.001 ;   % da verificare
+R_tilde(2,2) = 0.001 ;
+
+Bq = sqrt(Q_tilde) ;
 
 
-Ob = obsv(A,C);         %check on the observability
-rank_Ob= rank(Ob);
-P_filter= [-10 -30 -200 -300];       %poli dell'observer, quelli del PPx10
-L = (place(A',C',P))' ;
+rank(obsv(A,C))         %check on the observability
+rank(ctrb(A,Bq))
 
-%% LQ %%
+L_kf = lqr(A',C',Q_tilde,R_tilde)'
+
+%% LQR %%
+close all
 Q = zeros(4) ;
-Q(1,1) = 1 ;   % q for theta
-Q(2,2) = 10 ;   % q for theta_dot
-Q(3,3) = 10 ;   % q for phi
+Q(1,1) = 50 ;   % q for theta
+Q(2,2) = 50 ;   % q for theta_dot
+Q(3,3) = 5 ;   % q for phi
 Q(4,4) = 1 ;   % q for phi_dot
 
-R = 10 ;
+R = 100 ;
 Cq = sqrt(Q) ;
 
 rank(ctrb(A,B))     % == 4 so OK!
-rank(obsv(A,Cq))    % == 4 so ok|
+rank(obsv(A,Cq))    % == 4 so ok!
 
 [K_lq S P] = lqr(A,B,Q,R) ;
-cl_lq = tf(ss(A-B*K_lq,B,C,D))
 
+cl_lq = tf(ss(A-B*K_lq,B,C,D))
 figure
 step(cl_lq)
 ss_gain = 1/dcgain(cl_lq) 
@@ -255,3 +274,15 @@ nyquist(cl_lq)
 
 figure
 pzmap(cl_lq)
+
+%% Parameter Estimation %%
+load('exp_1_data.mat')
+t = angle(1,:)' ;
+theta_meas = angle(2,:)' ;
+phi_meas = angle(3,:)' ;
+
+figure
+subplot(2,1,1)
+plot(t, theta_meas)
+subplot(2,1,2)
+plot(t, phi_meas)
