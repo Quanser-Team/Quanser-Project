@@ -26,4 +26,4 @@ lr = xg; % rotary arm CoM distance
    % end of computations
 Jr = Jtot; % rotary arm moment of inertia
 Jh = 0.6e-6; % module attachment moment of inertia
-Jr_ex_ = Jr + (mr+mh)*lr^2 + Jh; % rotary arm "extended" moment of inertia 
+Jr_ex_ = Jr + (mr+mh)*lr^2; % rotary arm "extended" moment of inertia 
