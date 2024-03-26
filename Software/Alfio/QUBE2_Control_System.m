@@ -10,11 +10,11 @@ Bp = 6e-5;       % viscous damping rotary arm, to be estimated
 g = 9.81;        % Gravity
 
 %% TF of the Model
-M = [m1*L0^2 + I0 , -L0*l1*m1;-L0*l1*m1, m1*l1^2 + I1]; % Linear point Matrices
+M = [m1*L0^2 + I0 , -L0*l1*m1;-L0*l1*m1, m1*l1^2 + I1]; % Stable point Matrices
 C = [Bp, 0 ; 0, Br];
 K = [0, 0; 0, g*l1*m1];
 
-M_2 = [m1*L0^2 + I0 , +L0*l1*m1;+L0*l1*m1, m1*l1^2 + I1]; % Non linear point Matrices
+M_2 = [m1*L0^2 + I0 , +L0*l1*m1;+L0*l1*m1, m1*l1^2 + I1]; % Instable point Matrices
 C_2 = [Bp, 0 ; 0, Br];
 K_2 = [0, 0; 0, -g*l1*m1];
 
@@ -37,13 +37,38 @@ grid            % We can see that at 10 Hz of movement from Motor movement
                 % to Pendulum movement we have a resonance
 bode(TF_unstable);
 grid
-%% SS Model
-% A = [0,
-%      0,
-%      0,
-%      0,];
-% B = [];
-% C = [1 0 0 0;
-%      0 0 1 0];
-% D = [0;
-%      0];
+%% SS model
+
+a = I0+m1*L0^2;
+b = L0*l1*m1;
+c = I1+m1*l1^2;
+d = g*l1*m1;
+e = 1;
+
+ M1 = [1,0,0,0;
+      0,1,0,0;
+      0,0,a,-b;
+      0,0,-b,c];
+M2 = [0,0,1,0;
+      0,0,0,1;
+      0,0,-Bp,0;
+      0,-d,0,-Br];
+M3 = [0;
+      0;
+      e;
+      0];
+
+
+A = M1^(-1)*M2 
+B = M1^(-1)*M3
+C = [1,0,0,0;
+     0,1,0,0];
+D = 0;
+
+sys = ss(A,B,C,D)
+
+eigenvalues = eig(A)
+rank(A)
+G_tot = tf(sys)   % compute the transfer function matrix  
+figure 
+bode(G_tot)  % Plot the two Bode diagrams of the two transfer functions that we want ( from Va to theta and from Va to alpha)

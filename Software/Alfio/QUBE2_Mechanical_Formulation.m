@@ -27,7 +27,7 @@ eq1 = simplify(diff(diff(Ltotal,diff(theta0,t)),t)-diff(Ltotal,theta0)) - Te + B
 eq2 = simplify(diff(diff(Ltotal,diff(theta1,t)),t)-diff(Ltotal,theta1)) + Br*diff(theta1,t);
 
 
-%% Linearized Model 
+% Linearized Model 
 
 % Stable Point
 theta0_0 = 0;
@@ -50,3 +50,7 @@ thetadotdot1_0 = 0;
 
 eq1_lin_unstable = linearize_function(eq1, theta0, theta1, t, theta0_0, theta1_0, thetadot0_0, thetadot1_0, thetadotdot0_0, thetadotdot1_0);
 eq2_lin_unstable = linearize_function(eq2, theta0, theta1, t, theta0_0, theta1_0, thetadot0_0, thetadot1_0, thetadotdot0_0, thetadotdot1_0);
+
+
+
+

@@ -9,7 +9,7 @@ fy1 = subs(diff(f, y), {x, y, diff(x,t), diff(y,t), diff(x,t,t), diff(y,t,t)}, {
 fy2 = subs(diff(f, diff(y,t)), {x, y, diff(x,t), diff(y,t), diff(x,t,t), diff(y,t,t)}, {x0, y0, xdot0, ydot0, xdotdot0, ydotdot0});
 fy3 = subs(diff(f, diff(y,t,t)), {x, y, diff(x,t), diff(y,t), diff(x,t,t), diff(y,t,t)}, {x0, y0, xdot0, ydot0, xdotdot0, ydotdot0}); 
 
-f_linearized = f0 + fx1*(x-x0) + fx2*(diff(x,t)-xdot0)+ fy1*(y-y0) + fy2*(diff(y,t)-ydot0) + ...
-               fx3*(diff(x,t,t)-xdotdot0) + fy3*(diff(y,t,t)-ydotdot0) ;
+f_linearized = f0 + fx1*(x) + fx2*(diff(x,t))+ fy1*(y) + fy2*(diff(y,t)) + ...
+               fx3*(diff(x,t,t)) + fy3*(diff(y,t,t)) ;
 
 end
