@@ -7,17 +7,17 @@ clc
 
 Ra = 8.4;  % armature resistance
 L = 1.16e-3; % armature inductance
-Ke = 0.042; % torque constant
+%Ke = 0.042; % torque constant
 Kc =  0.042; % back-emf constant
 Jm = 4e-6; % motor inertia 
 Jh = 0.6e-6; % motor hub inertia 
 Br = 0; % damping coeff.
-
+k = 0; %static friction coeff
 
 %% State Space representation %%
 
 
-A =[ -Ra/L ,      -Ke/L;
+A =[ -Ra/L ,      -Kc/L;
    Kc/(Jm+Jh) , -Br/(Jm+Jh)];
 
 B = [1/L;
@@ -41,7 +41,7 @@ G_tot = tf(sys_complete)   % compute the transfer function matrix
 
 %% Neglecting electrical dynamics %%
 
-A1 =[ (-Br-Kc*Ke/Ra)/(Jh+Jm)];
+A1 =[ (-Br-Kc*Kc/Ra)/(Jh+Jm)];
 
 B1 = [ (Kc/Ra)/(Jm+Jh)];
 
@@ -63,17 +63,17 @@ G_partial = tf(sys_partial)   % compute the transfer function matrix
 
 %% Load and plot the experimental data
 
-load('current1.mat');
-load('omega1.mat');
+load('dati esp renzo 08-04/plus4V.mat');
+load('dati esp renzo 08-04/plus4Vomega.mat');
 
-time_vector_current = current(1,:);
-current_vector = current(2,:);
-
-figure
-plot(time_vector_current,current_vector);
-xlabel('Time');
-ylabel('measured current');
-grid on;
+% time_vector_current = current(1,:);
+% current_vector = current(2,:);
+% 
+% figure
+% plot(time_vector_current,current_vector);
+% xlabel('Time');
+% ylabel('measured current');
+% grid on;
 
 time_vector_omega = omega(1,:);
 omega_vector =(pi/180)*omega(2,:); % converted in rad/s
@@ -90,16 +90,24 @@ grid on;
 %the input voltage is a square wave of amplitude +-1V and frequency 0.25Hz
 
 % Find the steady state velocities value
-positive_steady_st_values = [];
-for i=1:length(omega_vector)
-   if ((omega_vector(i)<23) && (omega_vector(i)>22.1))
-       positive_steady_st_values = [positive_steady_st_values,omega_vector(i)];
-   end
+% positive_steady_st_values = [];
+% for i=1:length(omega_vector)
+%    if ((omega_vector(i)<23) && (omega_vector(i)>22.1))
+%        positive_steady_st_values = [positive_steady_st_values,omega_vector(i)];
+%    end
+% end
+% positive_st_st_vel = mean(positive_steady_st_values);
+% 
+% Va = 1; % the constant input voltage
+% omega_m = positive_st_st_vel % the measured constant velocity
+% Br = (Kc/(Ra*omega_m))*Va - (Ke*Kc/Ra)
+
+%% 
+
+ladder_INPUT = [];
+p=0;
+for i=1:21
+    
+    ladder_INPUT = [ladder_INPUT,p];
+    p=p+0.5;
 end
-positive_st_st_vel = mean(positive_steady_st_values);
-
-Va = 1; % the constant input voltage
-omega_m = positive_st_st_vel % the measured constant velocity
-Br = (Kc/(Ra*omega_m))*Va - (Ke*Kc/Ra)
-
-
