@@ -10,19 +10,36 @@ clc
 % Rod %
 mr = 0.095 ;    % kg
 Lr = 0.085 ;    % m
-Ir = (mr*Lr^2)/12 ; % = 2.2879e-04 kg*m^2 using Huyhens-Steiner
+% Ir = 4.7912e-05 ; % = 2.2879e-04 kg*m^2 using Huyhens-Steiner
+Ir=9.6e-05 ; % from Renzo
 % Pendulum %
 mp = 0.024 ;    % kg
 Lp = 0.129 ;    % m !!! mind that in the eqs I consider already the half
-Ip = (mp*Lp^2)/12 ; % = 8.3205e-06 kg*m^2
+Ip = (mp*Lp^2)/12 ; % = 3.3282e-05 kg*m^2
 % gravity acc %
 g0 = 9.81 ; % m/s^2
 
+alfa= 1.25e-5;
+beta = 1.295e-5;    %damping coefficient via experimental measurements
+
+
 % MotorDC %
 J = 4e-6 ;  % kg*m^2
+J_hub = 0.6e-6;
 Ra = 8.4 ;  % ohm
 La = 1.16e-3 ;  % H
 k = 42e-3 ;     % N*m/A
+
+dist = 0.01 ;
+Ld = 0.4*Lr ;
+
+% friction
+Fv = 0 ;
+fs = 0 ;
+
+Ir_tot = Ir + J +J_hub;
+Ip_tot = Ip + (mp*(Lp/2)^2) ;
+
 
 param = [mr mp Lr Lp Ir Ip g0]' ;
 
@@ -39,18 +56,27 @@ phi_dot_init = 0 ;
 % NT: the phi starts at the lower side and >0 C.C.W. and theta is >0 C.W.
 % BUT! in the physical model the phi and theta are measured in different
 % way so pay attention on the reference vauels for them !!!
-H = [(mr*(Lr/2)^2)+(mp*(Lr^2+((Lp/2)^2*(sin(phi))^2)))+Ir            -mp*Lr*Lp*cos(phi)/2;
+H = [(mp*(Lr^2+((Lp/2)^2*(sin(phi))^2)))+Ir            -mp*Lr*Lp*cos(phi)/2;
                      -mp*Lr*Lp*cos(phi)/2                              (mp*(Lp/2)^2)+Ip] ;
 
-Q = [mp*(Lp/2)^2*sin(phi)*cos(phi)*phi_dot                      (mp*(Lp/2)^2*sin(phi)*cos(phi)*theta_dot)-(mp*Lr*(Lp/2)*sin(phi)*phi_dot);
-     -mp*(Lp/2)^2*sin(phi)*cos(phi)*theta_dot                                                   0                                   ] ;
+Q = [mp*(Lp/2)^2*sin(phi)*cos(phi)*phi_dot+beta                      (mp*(Lp/2)^2*sin(phi)*cos(phi)*theta_dot)-(mp*Lr*(Lp/2)*sin(phi)*phi_dot);
+     -mp*(Lp/2)^2*sin(phi)*cos(phi)*theta_dot                                                   alfa                                   ] ;
 
 g = [           0     ;
      mp*g0*(Lp/2)*sin(phi)] ;
 tau = [((k/Ra)*Va)-((k^2/Ra)*theta_dot);
                     0                   ] ;
 
-q_ddot = H\[tau - Q*[theta_dot phi_dot]' - g] ;
+
+kt = 0.03;
+kc= 10e-3;
+
+
+Tr_theta = ((kt*theta)+(kc*theta_dot))*Ld;
+
+kt = dist ;
+Tr_theta = kt*theta*Ld ;
+q_ddot = H\[tau - Q*[theta_dot phi_dot]' - g - [Tr_theta 0]' ] ;
 
 
 % SS Reppr %
@@ -71,7 +97,7 @@ equilibrium = [0 == dx] ;
 % Operating Point
 x1_bar = 0 ;
 x2_bar = 0 ;
-x3_bar = 0 ;    % phi_bar 
+x3_bar = 0;    % phi_bar 
 x4_bar = 0 ;
 
 systeqs = subs(equilibrium, [x1 x2 x3 x4], [x1_bar x2_bar x3_bar x4_bar]) ;
@@ -132,6 +158,15 @@ G_ol = tf(ss(A, B, C, D))
 figure
 bode(G_ol)
 eig(A)
+
+%% SYSTEM ENLARGEMENT
+% we add the disturbance dynamics, considering it as a constant
+
+A_ext = [A zeros(4,1);
+         10 zeros(1,4)];
+B_ext = [B; 0];
+C_ext = [C zeros(2,1)];
+D_ext = D;
 
 %% Delay
 
@@ -248,12 +283,13 @@ L_kf = lqr(A',C',Q_tilde,R_tilde)'
 %% LQR %%
 close all
 Q = zeros(4) ;
-Q(1,1) = 50 ;   % q for theta
-Q(2,2) = 50 ;   % q for theta_dot
-Q(3,3) = 5 ;   % q for phi
-Q(4,4) = 1 ;   % q for phi_dot
+Q(1,1) = 100;   % q for theta
+Q(2,2) = 10 ;   % q for theta_dot
+Q(3,3) = 1 ;   % q for phi
+Q(4,4) = 10 ;   % q for phi_dot
 
-R = 100 ;
+
+R = 1 ;
 Cq = sqrt(Q) ;
 
 rank(ctrb(A,B))     % == 4 so OK!
@@ -286,3 +322,17 @@ subplot(2,1,1)
 plot(t, theta_meas)
 subplot(2,1,2)
 plot(t, phi_meas)
+
+%% FFT
+
+U = fft(ans(2,:));
+Y = fft(angle(2,:));
+
+absU = abs(U);
+absY = abs(Y);
+
+W= absY.\absU;
+
+figure
+plot(length(W), W);
+
