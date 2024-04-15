@@ -41,8 +41,8 @@ G_partial = tf(sys_partial)   % compute the transfer function matrix
 
 %the motor+rod system was fed a +-1V square wave at 0.1Hz
 
-load('current2.mat');
-load('omega2.mat');
+load('current4.mat');
+load('omega4.mat');
 
 time_vector_current = current(1,:);
 current_vector = current(2,:);
@@ -55,6 +55,13 @@ grid on;
 
 time_vector_omega = omega(1,:);
 omega_vector =(pi/180)*omega(2,:); % converted in rad/s
+end_index = find(time_vector_omega >= 30, 1);
+start_index = find(time_vector_omega >= 0, 1);
+time_vector_omega = time_vector_omega(start_index:end_index);
+omega_vector =omega_vector(start_index:end_index);
+
+omega0 = omega_vector(1);
+time_vector_omega = time_vector_omega - time_vector_omega(1);
 
 figure
 plot(time_vector_omega,omega_vector);
