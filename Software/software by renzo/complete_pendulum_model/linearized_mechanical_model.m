@@ -26,8 +26,8 @@ Utotal = -mp*g*lp*(cos(alpha));
 Ltotal = Ttotal - Utotal;
 
 % Lagrange Equations
-eq1 = simplify(diff(diff(Ltotal,diff(theta,t)),t)-diff(Ltotal,theta)) - tau + Bp*diff(theta,t);
-eq2 = simplify(diff(diff(Ltotal,diff(alpha,t)),t)-diff(Ltotal,alpha)) + Br*diff(alpha,t);
+eq1 = simplify(diff(diff(Ltotal,diff(theta,t)),t)-diff(Ltotal,theta)) - tau + Br*diff(theta,t);
+eq2 = simplify(diff(diff(Ltotal,diff(alpha,t)),t)-diff(Ltotal,alpha)) + Bp*diff(alpha,t);
 
 %% Adding DC motor model
 
@@ -129,17 +129,21 @@ P = [p11;
 A = M^(-1)*(-N);
 B = M^(-1)*(-P);
 C = [1,0,0,0;
-     0,1,0,0];
+     0,1,0,0;
+     0,0,1,0;
+     0,0,0,1];
 D = [0;
+     0;
+     0;
      0];
 
 %% data %%
 
 % mechanical parameters
 
-mr = 0.0918; % rotary arm mass
+mr = 0.09183; % rotary arm mass
 mh = 0.0106; % rotary hub mass
-Lr_ = 0.085; % rotary arm length
+Lr_ = 0.09; % rotary arm length
 %   % rotary arm centre of mass position computation:
 %    l1=0.054;
 %    l2=0.057;
@@ -166,17 +170,18 @@ Lr_ = 0.085; % rotary arm length
 % Jr = Jtot; % rotary arm moment of inertia
 Jh = 0.6e-6; % module attachment moment of inertia
 %Jr_ex_ = Jr + (mr+mh)*lr^2; % rotary arm "extended" moment of inertia 
-Jr_ex_ = 9.5e-5;
+Jr_ex_ = 9e-5;
 Br_ = 0;
+%Br_ = 3.8e-6;
 
-mp_ = 0.024; % pendulum mass
+mp_ = 0.02421; % pendulum mass
 Lp = 0.129; % pendulum length
-lp_ = Lp/2; % pendulum CoM distance
+lp_ = 0.95*Lp/2; % pendulum CoM distance
 rp = 0.0098/2; % pendulum radius
-%Jp_ = (1/12)*mp_*(3*rp^2 + Lp^2); % pendulum moment of inertia 
-Jp_ = 2.44e-5; 
+Jp_ = (1/12)*mp_*(3*rp^2 + Lp^2); % pendulum moment of inertia 
+%Jp_ = 2.44e-5; 
+%Bp_ = 1.25e-5;
 Bp_ = 0;
-
 
 g_ = 9.81; % gravity acc
 
@@ -200,13 +205,34 @@ eigenvalues = eig(A)
 
 
 G_tot = tf(sys)   % compute the transfer function matrix  
-figure 
-bode(G_tot)  % Plot the two Bode diagrams of the two transfer functions that we want ( from Va to theta and from Va to alpha)
-
-%% 
-
-
+% figure 
+% bode(G_tot)  % Plot the two Bode diagrams of the two transfer functions that we want ( from Va to theta and from Va to alpha)
+pole(G_tot(3))
+zero(G_tot(3))
 
 
+%% load exp data %
+
+path = 'exp_data/sqwv1V1Hz';
+
+load(append(path,'/omega.mat'));
+load(append(path,'/theta.mat'));
+load(append(path,'/phi.mat'));
+
+load(append(path,'/omega_sim.mat'));
+load(append(path,'/theta_sim.mat'));
+load(append(path,'/phi_sim.mat'));
+
+time_vector_omega = omega(1,:);
+omega_vector =(pi/180)*omega(2,:); % converted in rad/s
+ts_omega = timeseries(omega_vector,time_vector_omega);
+
+time_vector_theta = theta(1,:);
+theta_vector =(pi/180)*theta(2,:); % converted in rad
+ts_theta = timeseries(theta_vector,time_vector_theta);
+
+time_vector_phi = phi(1,:);
+phi_vector =(pi/180)*phi(2,:); % converted in rad
+ts_phi = timeseries(phi_vector,time_vector_phi);
 
 

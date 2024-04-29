@@ -34,9 +34,9 @@ eq = simplify( diff(diff(Ltotal,diff(alpha,t)),t) - diff(Ltotal,alpha)) + diff(D
 
 % mechanical parameters
 
-mp_ = 0.024; % pendulum mass
+mp_ = 0.02421; % pendulum mass
 Lp = 0.129; % pendulum length
-lp_ = Lp/2; % pendulum CoM distance
+lp_ = 0.95*Lp/2; % pendulum CoM distance
 rp = 0.0098/2; % pendulum radius
 Jp_ = (1/12)*mp_*(3*rp^2 + Lp^2); % pendulum moment of inertia 
 
@@ -46,7 +46,7 @@ Bp_ = 1e-5;
 
 %% Load measured data %%
 
-load('12phi.mat');
+load('11phi.mat');
 
 time_vector_alpha = phi(1,:);
 alpha_vector = (pi/180)*phi(2,:);
@@ -84,8 +84,8 @@ alpha_vector = (pi/180)*phi(2,:);
 %% cut the initial part of the experiment%%
 
 % Define the initial time (change this to your actual initial time)
-initialTime = 7.656;
-endTime = 60;
+initialTime = 1.978;
+endTime = 69;
 
 % Find the index corresponding to the initial time
 startIndex = find(time_vector_alpha >= initialTime, 1);
@@ -219,7 +219,7 @@ title('peaks')
 m = mp_*lp_^2 + Jp_;
 k = g_*lp_*mp_;
 a = 0.1;
-c = 0.1;
+c = alpha_0;
 
 open("parameter_estimation_simulink.slx")
 
@@ -229,9 +229,9 @@ Bp_ = 2*m*a
 
 
 %% update parameters with estimated values %%
-
-Bp_ = 1.46e-5
-Jp_ = 2.4573e-5
-
-Bp_ = 1.51e-5
-Jp_ = 2.44e-5
+% 
+% Bp_ = 1.46e-5
+% Jp_ = 2.4573e-5
+% 
+% Bp_ = 1.51e-5
+% Jp_ = 2.44e-5

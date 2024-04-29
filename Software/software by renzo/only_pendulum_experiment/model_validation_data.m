@@ -9,13 +9,18 @@ clc
 
 mp_ = 0.024; % pendulum mass
 Lp = 0.129; % pendulum length
-lp_ = Lp/2; % pendulum CoM distance
+lp_ = 0.95*Lp/2; % pendulum CoM distance
 rp = 0.0098/2; % pendulum radius
-Jp_ = 2.44e-5;  % pendulum moment of inertia 
+%Jp_ = 2.44e-5;  % pendulum moment of inertia 
+Jp_ = (1/12)*mp_*(3*rp^2 + Lp^2); % pendulum moment of inertia
 
 g_ = 9.81; % gravity acc
 
-Bp_ = 1.51e-5;
+Bp_ = 1.25e-5;
+
+
+V1 = (mp_*lp_^2 + Jp_);
+V2 = lp_*mp_;
 
 %% prepare the data for simulink %%
 
@@ -25,8 +30,8 @@ time_vector_alpha = phi(1,:);
 alpha_vector = (pi/180)*phi(2,:);
 
 % Define the initial time (change this to your actual initial time)
-initialTime = 1.904;
-endTime =  100;
+initialTime = 1.966;
+endTime =  50;
 
 % Find the index corresponding to the initial time
 startIndex = find(time_vector_alpha >= initialTime, 1);
@@ -51,6 +56,6 @@ nexttile
 plot(cutTimesTranslated,cutData);
 title('cut data')
 
-open("pendulum_model_simulink.slx")
+open("parameter_estimation_simulink.slx")
 
 

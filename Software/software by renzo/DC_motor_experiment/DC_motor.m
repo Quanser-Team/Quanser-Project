@@ -64,7 +64,7 @@ G_partial = tf(sys_partial)   % compute the transfer function matrix
 %% Load and plot the experimental data
 
 %path = 'dati esp renzo 08-04/ramp_p_01';
-path = 'dati esp renzo 08-04/ladder_m';
+path = 'dati esp renzo 08-04/ladder_p';
 
 load(append(path,'/current.mat'));
 load(append(path,'/omega.mat'));
