@@ -58,28 +58,28 @@ alpha_vector = (pi/180)*phi(2,:);
 % grid on;
 
 %% compute oscillation frequency from measured data %%
-% zero_crossings_indexes = [];
-% for i=1:length(alpha_vector)
-%    if alpha_vector(i) == 0 
-%       zero_crossings_indexes = [zero_crossings_indexes,i];
-%    end
-% end
-% zero_crossings_times = [];
-% for i=1:length(zero_crossings_indexes)
-% 
-%     zero_crossings_times = [zero_crossings_times,time_vector_alpha(zero_crossings_indexes(i))];
-% end
-% 
-% periods_vector= [];
-% for i=40:length(zero_crossings_times)
-% 
-%     period = zero_crossings_times(i) - zero_crossings_times(i-1);
-%     if period>0.2 
-%     periods_vector = [periods_vector,period];
-%     end
-% end
-% 
-% mean_period = mean(periods_vector);
+zero_crossings_indexes = [];
+for i=1:length(alpha_vector)
+   if alpha_vector(i) == 0 
+      zero_crossings_indexes = [zero_crossings_indexes,i];
+   end
+end
+zero_crossings_times = [];
+for i=1:length(zero_crossings_indexes)
+
+    zero_crossings_times = [zero_crossings_times,time_vector_alpha(zero_crossings_indexes(i))];
+end
+
+periods_vector= [];
+for i=40:length(zero_crossings_times)
+
+    period = zero_crossings_times(i) - zero_crossings_times(i-1);
+    if period>0.2 
+    periods_vector = [periods_vector,period];
+    end
+end
+
+mean_period = mean(periods_vector);
 
 %% cut the initial part of the experiment%%
 

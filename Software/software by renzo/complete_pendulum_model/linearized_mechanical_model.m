@@ -205,10 +205,10 @@ eigenvalues = eig(A)
 
 
 G_tot = tf(sys)   % compute the transfer function matrix  
-% figure 
-% bode(G_tot)  % Plot the two Bode diagrams of the two transfer functions that we want ( from Va to theta and from Va to alpha)
-pole(G_tot(3))
-zero(G_tot(3))
+figure 
+bode(G_tot)  % Plot the two Bode diagrams of the two transfer functions that we want ( from Va to theta and from Va to alpha)
+pole(G_tot(2))
+zero(G_tot(2))
 
 
 %% load exp data %

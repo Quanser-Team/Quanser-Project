@@ -71,95 +71,30 @@ Ra_ = 8.4; % armature resistance
 theta_0 = 0;
 alpha_0 = 0;
 thetadot_0 = 0;
-%% Neglecting electrical dynamics %%
 
-A1 =[           0               1;
-          0  ( -Br-Kc*Ke/Ra)/(Jm+Jr)];
-
-B1 = [        0; 
-      (Kc/Ra)/(Jm+Jr)];
-
-C1 = [1   0;
-      0   1];
-
-
-D1 = [0;
-      0];
-
-sys_partial = ss(A1,B1,C1,D1)
-
-eigenvalues = eig(A1)
-
-
-
-%% Transfer Function %%
-
-
-G_partial = tf(sys_partial)   % compute the transfer function matrix  
-pole(G_partial(2))
-zero(G_partial(2))
-figure 
-bode(G_partial(1))  % Plot the two Bode diagrams of the two transfer functions that we want ( from Va to theta and from Va to alpha)
-figure 
-bode(G_partial(2))
-%% only DC motor controller param %%
-
-ka1 = 0.51;
-%ka1 = 1;
-kb1 = 10/3;
-
-c_poles = [0];
-c_zeros = [-2.121];
-
-Cs1 = zpk(c_zeros,c_poles,ka1);
-
-Hs1 = 1 - 1/Cs1
-
-
-%% the linearized tf from Va to theta_dot from the complete system %%
+%% the linearized tf from Va to alpha from the complete system %%
 
 
 pole1 = -0.3661 +15.2601i;
 pole2 = -0.3661 -15.2601i;
 pole3 = -0.7357;
 
-zero1 = -0.0 +10.8065i;
-zero2 = -0.0 -10.8065i;
+zero1 = 0;
 
-num = [34.95 0 4081  ];
+
+num = [37.44 0];
 den = [ 1 1.468 233.5 171.4];
 
 
 lin_tf = tf(num,den)
 
-%% second controller %%
+%% complex controller based on the complete lin tf 
 
-c_poles = [zero1, zero2, 0];
-c_zeros = [pole1, pole2, pole3];
-ka2 = 100;
-kb2 = 5;
+ka1 = 0.13354;
 
-Cs2 = zpk(c_zeros,c_poles,ka2);
+c_poles = [zero1 0 -100];
+c_zeros = [pole1 pole2 pole3];
 
-Hs2 = 1 - 1/Cs2
+Cs1 = zpk(c_zeros,c_poles,ka1)
 
-%1/(1-Hs)
-
-%% third controller
-
-ka3 = 0.5;
-%ka1 = 1;
-kb3 = 10/3;
-
-c_poles = [0];
-c_zeros = [-0.7357 ];
-
-Cs3 = zpk(c_zeros,c_poles,ka3);
-
-Hs3 = 1 - 1/Cs3
-%% 
-
-L_s = Cs3*lin_tf
-figure 
-bode(L_s)
-rlocus(L_s)
+Hs1 = 1 - 1/Cs1
