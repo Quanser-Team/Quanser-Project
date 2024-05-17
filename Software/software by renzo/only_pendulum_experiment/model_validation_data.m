@@ -39,7 +39,7 @@ endIndex = find(time_vector_alpha >= endTime, 1);
 
 % Cut the time and data vectors at the initial time
 cutTimes = time_vector_alpha(startIndex:endIndex);
-cutData = alpha_vector(startIndex:endIndex        );
+cutData = alpha_vector(startIndex:endIndex);
 
 % Translate the time vector so that the initial time is 0
 cutTimesTranslated = cutTimes - initialTime;

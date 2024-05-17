@@ -168,9 +168,9 @@ Lr_ = 0.09; % rotary arm length
 %    Jtot = (J1 + density*V1*(xg1-xg)^2) + (J2 + density*V2*(xg2-xg)^2) + J3;
 %    % end of computations
 % Jr = Jtot; % rotary arm moment of inertia
-Jh = 0.6e-6; % module attachment moment of inertia
+Jh = 0.6e-6 + 4e-6; % module attachment moment of inertia and rotor inertia
 %Jr_ex_ = Jr + (mr+mh)*lr^2; % rotary arm "extended" moment of inertia 
-Jr_ex_ = 9e-5;
+Jr_ex_ = 9.5e-5 + Jh; %total moment of inertia of the rod around the pivot
 Br_ = 0;
 %Br_ = 3.8e-6;
 
@@ -213,7 +213,7 @@ zero(G_tot(2))
 
 %% load exp data %
 
-path = 'exp_data/sqwv1V1Hz';
+path = 'exp_data/sqwv1V5Hz';
 
 load(append(path,'/omega.mat'));
 load(append(path,'/theta.mat'));

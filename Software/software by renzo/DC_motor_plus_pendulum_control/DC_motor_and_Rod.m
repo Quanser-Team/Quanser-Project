@@ -9,7 +9,7 @@ Ra = 8.4;  % armature resistance
 L = 1.16e-3; % armature inductance
 Ke = 0.042; % torque constant
 Kc =  0.042; % back-emf constant
-Jm = 4e-6; % motor inertia 
+Jm = 4e-6 + 0.6e-6; % motor inertia plus rotor hub inertia
 Jr = 9.5e-5; % rod inertia from param estim
 Br = 0; % damping coeff. estimated in previous experiments
 k = 0;
@@ -48,7 +48,7 @@ Lr_ = 0.09; % rotary arm length
 % Jr = Jtot; % rotary arm moment of inertia
 Jh = 0.6e-6; % module attachment moment of inertia
 %Jr_ex_ = Jr + (mr+mh)*lr^2; % rotary arm "extended" moment of inertia 
-Jr_ex_ = 9.5e-5;
+Jr_ex_ = 9.5e-5 + Jm;
 Br_ = 1.25e-5;
 
 mp_ = 0.02421; % pendulum mass
@@ -104,62 +104,68 @@ figure
 bode(G_partial(2))
 %% only DC motor controller param %%
 
-ka1 = 0.51;
+ka1 = 50; % cutting freq of speed loop
 %ka1 = 1;
-kb1 = 10/3;
+kb1 = 5; %cutting freq of pos loop
 
 c_poles = [0];
 c_zeros = [-2.121];
 
-Cs1 = zpk(c_zeros,c_poles,ka1);
+G_partial(2).Numerator
+G_partial(2).Numerator
+G_partial(2).Denominator
 
-Hs1 = 1 - 1/Cs1
+Cs1 = ka1*tf(G_partial(2).Denominator,[G_partial(2).Numerator{1,1}(2) 0 ])
+% Cs1 = zpk(c_zeros,c_poles,ka1);
 
-
-%% the linearized tf from Va to theta_dot from the complete system %%
-
-
-pole1 = -0.3661 +15.2601i;
-pole2 = -0.3661 -15.2601i;
-pole3 = -0.7357;
-
-zero1 = -0.0 +10.8065i;
-zero2 = -0.0 -10.8065i;
-
-num = [34.95 0 4081  ];
-den = [ 1 1.468 233.5 171.4];
+Ls = Cs1*G_partial(2)
+% Hs1 = 1 - 1/Cs1
 
 
-lin_tf = tf(num,den)
-
-%% second controller %%
-
-c_poles = [zero1, zero2, 0];
-c_zeros = [pole1, pole2, pole3];
-ka2 = 100;
-kb2 = 5;
-
-Cs2 = zpk(c_zeros,c_poles,ka2);
-
-Hs2 = 1 - 1/Cs2
-
-%1/(1-Hs)
-
-%% third controller
-
-ka3 = 0.5;
-%ka1 = 1;
-kb3 = 10/3;
-
-c_poles = [0];
-c_zeros = [-0.7357 ];
-
-Cs3 = zpk(c_zeros,c_poles,ka3);
-
-Hs3 = 1 - 1/Cs3
-%% 
-
-L_s = Cs3*lin_tf
-figure 
-bode(L_s)
-rlocus(L_s)
+% %% the linearized tf from Va to theta_dot from the complete system %%
+% 
+% 
+% pole1 = -0.3661 +15.2601i;
+% pole2 = -0.3661 -15.2601i;
+% pole3 = -0.7357;
+% 
+% zero1 = -0.0 +10.8065i;
+% zero2 = -0.0 -10.8065i;
+% 
+% num = [34.95 0 4081  ];
+% den = [ 1 1.468 233.5 171.4];
+% 
+% 
+% lin_tf = tf(num,den)
+% 
+% %% second controller %%
+% 
+% c_poles = [zero1, zero2, 0];
+% c_zeros = [pole1, pole2, pole3];
+% ka2 = 100;
+% kb2 = 5;
+% 
+% Cs2 = zpk(c_zeros,c_poles,ka2);
+% 
+% Hs2 = 1 - 1/Cs2
+% 
+% %1/(1-Hs)
+% 
+% %% third controller
+% 
+% ka3 = 0.5;
+% %ka1 = 1;
+% kb3 = 10/3;
+% 
+% c_poles = [0];
+% c_zeros = [-0.7357 ];
+% 
+% Cs3 = zpk(c_zeros,c_poles,ka3);
+% 
+% Hs3 = 1 - 1/Cs3
+% %% 
+% 
+% L_s = Cs3*lin_tf
+% figure 
+% bode(L_s)
+% rlocus(L_s)

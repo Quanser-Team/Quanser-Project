@@ -98,3 +98,8 @@ c_zeros = [pole1 pole2 pole3];
 Cs1 = zpk(c_zeros,c_poles,ka1)
 
 Hs1 = 1 - 1/Cs1
+
+%% internal model control
+
+Q = tf([2500],[1 100 2500]);
+Cs2 = lin_tf^(-1)*Q

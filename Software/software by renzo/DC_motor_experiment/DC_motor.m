@@ -61,28 +61,80 @@ G_partial = tf(sys_partial)   % compute the transfer function matrix
 % bode(G_partial)  % Plot the two Bode diagrams of the two transfer functions that we want ( from Va to theta and from Va to alpha)
 
 
-%% Load and plot the experimental data
+%% Load and plot the experimental data from steps
 
-%path = 'dati esp renzo 08-04/ramp_p_01';
-path = 'dati esp renzo 08-04/ladder_p';
+% path = 'dati esp renzo 08-04/';
+% load('dati esp renzo 08-04/minus1V.mat'); %input voltage
+% load('dati esp renzo 08-04/minus1Vomega.mat'); %output speed
+% 
+% time_vector_omega = omega(1,:);
+% omega_vector =(pi/180)*omega(2,:); % converted in rad/s
+% 
+% figure
+% plot(time_vector_omega,omega_vector);
+% xlabel('Time');
+% ylabel('measured velocity');
+% grid on;
+% 
+% time_vector_Va = input(1,:);
+% Va_vector = input(2,:);
+% 
+% figure
+% plot(time_vector_Va,Va_vector);
+% xlabel('Time');
+% ylabel('measured velocity');
+% grid on;
+% 
+% ts_Va = timeseries(Va_vector,time_vector_Va);
+% ts_omega = timeseries(omega_vector,time_vector_omega);
+
+
+%% Load and plot the experimental data from ladder for friction id
+path = 'dati esp renzo 08-04/friction_id';
+
+initialTime = 23.01;
+endTime =  77.9;
+initialTime = 0;
+endTime =  100.9;
+
 
 load(append(path,'/current.mat'));
 load(append(path,'/omega.mat'));
-load(append(path,'/theta.mat'));
-load(append(path,'/Va.mat'));
+load(append(path,'/input.mat'));
 
 time_vector_current = current(1,:);
-current_vector = current(2,:);
+current_vector = smoothdata(current(2,:));
+torque_vector = Kc*current_vector;
 %current_vector = smoothdata(current(2,:));
 
 time_vector_omega = omega(1,:);
-omega_vector =(pi/180)*omega(2,:); % converted in rad/s
-end_index = find(time_vector_omega >= 18, 1);
-omega_vector = omega_vector(1:end_index);
-time_vector_omega = time_vector_omega(1:end_index);
-%time_vector_omega = time_vector_omega(100:6000);
-%omega_vector =omega_vector(100:6000); % converted in rad/s
+omega_vector =omega(2,:);
 
+time_vector_Va = input(1,:);
+Va_vector = input(2,:);
+
+% Find the index corresponding to the initial time
+startIndex = find(time_vector_omega >= initialTime, 1);
+endIndex = find(time_vector_omega >= endTime, 1);
+
+torque_vector = torque_vector(startIndex:endIndex);
+omega_vector =omega_vector(startIndex:endIndex);
+
+
+% ts_Va = timeseries(Va_vector,time_vector_Va);
+% ts_omega = timeseries(omega_vector,time_vector_omega);
+
+figure
+plot(time_vector_current,current_vector);
+xlabel('Time');
+ylabel('measured velocity');
+grid on;
+
+figure
+plot(omega_vector,torque_vector);
+xlabel('Time');
+ylabel('input voltage');
+grid on;
 
 figure
 plot(time_vector_omega,omega_vector);
@@ -90,89 +142,123 @@ xlabel('Time');
 ylabel('measured velocity');
 grid on;
 
-time_vector_theta = theta(1,:);
-theta_vector = theta(2,:);
 
-figure
-plot(time_vector_theta,theta_vector);
-xlabel('Time');
-ylabel('measured angle');
-grid on;
+%% Load and plot the experimental data from ladder
 
-time_vector_Va = Va(1,:);
-Va_vector = Va(2,:);
-end_index = find(time_vector_Va >= 18, 1);
-Va_vector = Va_vector(1:end_index);
-time_vector_Va = time_vector_Va(1:end_index);
-%time_vector_Va = time_vector_Va(100:6000);
-%Va_vector =Va_vector(100:6000); % converted in rad/s
-
-figure
-plot(time_vector_Va,Va_vector);
-xlabel('Time');
-ylabel('input voltage');
-grid on;
-
-ts_Va = timeseries(Va_vector,time_vector_Va);
-
-%% current offset compensation %
-
-one_sec_index = find(time_vector_current >= 0.99, 1);
-current_offset_vector = current_vector(1:one_sec_index);
-
-current_offset = mean(current_offset_vector);
-
-current_vector = current_vector - current_offset;
-
-figure
-plot(time_vector_current,current_vector);
-xlabel('Time');
-ylabel('measured current');
-grid on;
-
-%% Analyze data and compute the damping coefficient from the steady state values%
-
-%the input voltage is a square wave of amplitude +-1V and frequency 0.25Hz
-
-% Find the steady state velocities value
-% positive_steady_st_values = [];
-% for i=1:length(omega_vector)
-%    if ((omega_vector(i)<23) && (omega_vector(i)>22.1))
-%        positive_steady_st_values = [positive_steady_st_values,omega_vector(i)];
-%    end
-% end
-% positive_st_st_vel = mean(positive_steady_st_values);
+% %path = 'dati esp renzo 08-04/ramp_p_01';
+% path = 'dati esp renzo 08-04/ladder_p';
 % 
-% Va = 1; % the constant input voltage
-% omega_m = positive_st_st_vel % the measured constant velocity
-% Br = (Kc/(Ra*omega_m))*Va - (Ke*Kc/Ra)
+% load(append(path,'/current.mat'));
+% load(append(path,'/omega.mat'));
+% load(append(path,'/theta.mat'));
+% load(append(path,'/Va.mat'));
+% 
+% time_vector_current = current(1,:);
+% current_vector = current(2,:);
+% %current_vector = smoothdata(current(2,:));
+% 
+% time_vector_omega = omega(1,:);
+% omega_vector =(pi/180)*omega(2,:); % converted in rad/s
+% end_index = find(time_vector_omega >= 18, 1);
+% omega_vector = omega_vector(1:end_index);
+% time_vector_omega = time_vector_omega(1:end_index);
+% %time_vector_omega = time_vector_omega(100:6000);
+% %omega_vector =omega_vector(100:6000); % converted in rad/s
+% 
+% 
+% figure
+% plot(time_vector_omega,omega_vector);
+% xlabel('Time');
+% ylabel('measured velocity');
+% grid on;
+% 
+% time_vector_theta = theta(1,:);
+% theta_vector = theta(2,:);
+% 
+% figure
+% plot(time_vector_theta,theta_vector);
+% xlabel('Time');
+% ylabel('measured angle');
+% grid on;
+% 
+% time_vector_Va = Va(1,:);
+% Va_vector = Va(2,:);
+% end_index = find(time_vector_Va >= 18, 1);
+% Va_vector = Va_vector(1:end_index);
+% time_vector_Va = time_vector_Va(1:end_index);
+% %time_vector_Va = time_vector_Va(100:6000);
+% %Va_vector =Va_vector(100:6000); % converted in rad/s
+% 
+% figure
+% plot(time_vector_Va,Va_vector);
+% xlabel('Time');
+% ylabel('input voltage');
+% grid on;
+% 
+% ts_Va = timeseries(Va_vector,time_vector_Va);
+% 
+% %% current offset compensation %
+% 
+% one_sec_index = find(time_vector_current >= 0.99, 1);
+% current_offset_vector = current_vector(1:one_sec_index);
+% 
+% current_offset = mean(current_offset_vector);
+% 
+% current_vector = current_vector - current_offset;
+% 
+% figure
+% plot(time_vector_current,current_vector);
+% xlabel('Time');
+% ylabel('measured current');
+% grid on;
+% 
+% %% Analyze data and compute the damping coefficient from the steady state values%
+% 
+% %the input voltage is a square wave of amplitude +-1V and frequency 0.25Hz
+% 
+% % Find the steady state velocities value
+% % positive_steady_st_values = [];
+% % for i=1:length(omega_vector)
+% %    if ((omega_vector(i)<23) && (omega_vector(i)>22.1))
+% %        positive_steady_st_values = [positive_steady_st_values,omega_vector(i)];
+% %    end
+% % end
+% % positive_st_st_vel = mean(positive_steady_st_values);
+% % 
+% % Va = 1; % the constant input voltage
+% % omega_m = positive_st_st_vel % the measured constant velocity
+% % Br = (Kc/(Ra*omega_m))*Va - (Ke*Kc/Ra)
+% 
+% %% ladder input steady state values computation %%
+% 
+% % ss_current = [];
+% % init_index = find(time_vector_current >= 1.15, 1);
+% % end_index = find(time_vector_current >= 1.9, 1);
+% % for i=1:17
+% %     vector = current_vector(init_index:end_index);
+% %     init_index = find(time_vector_current >= 1.15+i, 1);
+% %     end_index = find(time_vector_current >= 1.9+i, 1);
+% %     ss_current = [ss_current,mean(vector)];
+% % end
+% % 
+% % ss_omega = [];
+% % init_index = find(time_vector_omega >= 1.15, 1);
+% % end_index = find(time_vector_omega >= 1.9, 1);
+% % for i=1:17
+% %     vector = omega_vector(init_index:end_index);
+% %     init_index = find(time_vector_omega >= 1.15+i, 1);
+% %     end_index = find(time_vector_omega >= 1.9+i, 1);
+% %     ss_omega = [ss_omega,mean(vector)];
+% % end
+% % 
+% % theor_ss_current = [];
+% % 
+% % for i=1:17
+% %    new_val = (1/Ra)*(-0.5*i) - (Kc/Ra)*ss_omega(i); 
+% %    theor_ss_current = [theor_ss_current,new_val];
+% % 
+% % end
+% 
+%% ladder signal
 
-%% ladder input steady state values computation %%
-
-% ss_current = [];
-% init_index = find(time_vector_current >= 1.15, 1);
-% end_index = find(time_vector_current >= 1.9, 1);
-% for i=1:17
-%     vector = current_vector(init_index:end_index);
-%     init_index = find(time_vector_current >= 1.15+i, 1);
-%     end_index = find(time_vector_current >= 1.9+i, 1);
-%     ss_current = [ss_current,mean(vector)];
-% end
-% 
-% ss_omega = [];
-% init_index = find(time_vector_omega >= 1.15, 1);
-% end_index = find(time_vector_omega >= 1.9, 1);
-% for i=1:17
-%     vector = omega_vector(init_index:end_index);
-%     init_index = find(time_vector_omega >= 1.15+i, 1);
-%     end_index = find(time_vector_omega >= 1.9+i, 1);
-%     ss_omega = [ss_omega,mean(vector)];
-% end
-% 
-% theor_ss_current = [];
-% 
-% for i=1:17
-%    new_val = (1/Ra)*(-0.5*i) - (Kc/Ra)*ss_omega(i); 
-%    theor_ss_current = [theor_ss_current,new_val];
-% 
-% end
+v = -5:0.1:5;
