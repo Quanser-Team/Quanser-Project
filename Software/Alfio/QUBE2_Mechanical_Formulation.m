@@ -52,14 +52,19 @@ eq1 = subs(eq1, tau , (Kc/Ra)*Va-(Kc*Ke/Ra)*diff(theta,t));
 theta_0 = 0;
 thetadot_0 = 0;
 thetadotdot_0 = 0;
-alpha_0 = 0;  % Pendulum DOWNWARDS
+alpha_0 = pi;  % Pendulum DOWNWARDS
 alphadot_0 = 0;
 alphadotdot_0 = 0;
 Va_0 = 0;
 
+alpha_0_swingup = 0;
+
 
 eq1_lin = linearize_function(eq1, theta, alpha, t, theta_0, alpha_0, thetadot_0, alphadot_0, thetadotdot_0, alphadotdot_0);
 eq2_lin = linearize_function(eq2, theta, alpha, t, theta_0, alpha_0, thetadot_0, alphadot_0, thetadotdot_0, alphadotdot_0);
+
+eq1_lin_swingup = linearize_function(eq1, theta, alpha, t, theta_0, alpha_0_swingup, thetadot_0, alphadot_0, thetadotdot_0, alphadotdot_0);
+eq2_lin_swingup = linearize_function(eq2, theta, alpha, t, theta_0, alpha_0_swingup, thetadot_0, alphadot_0, thetadotdot_0, alphadotdot_0);
 
 %% Compute the linearized model state space matrices %%
 
@@ -137,6 +142,78 @@ D = [0;
      0;
      0];
 
+%% SWINGUP matrices
+
+m11 = 1;              
+m12 = 0;
+m13 = 0;
+m14 = 0;
+
+m21 = 0;
+m22 = 1;
+m23 = 0;
+m24 = 0;
+
+m31 = 0;
+m32 = 0;
+m33 = diff(eq1_lin_swingup,diff(theta,t,t));
+m34 = diff(eq1_lin_swingup,diff(alpha,t,t));
+
+m41 = 0;
+m42 = 0;
+m43 = diff(eq2_lin_swingup,diff(theta,t,t));
+m44 = diff(eq2_lin_swingup,diff(alpha,t,t));
+
+n11 = 0;              
+n12 = 0;
+n13 = -1;
+n14 = 0;
+
+n21 = 0;
+n22 = 0;
+n23 = 0;
+n24 = -1;
+
+n31 = diff(eq1_lin_swingup,theta);
+n32 = diff(eq1_lin_swingup,alpha);
+n33 = diff(eq1_lin_swingup,diff(theta,t));
+n34 = diff(eq1_lin_swingup,diff(alpha,t));
+
+n41 = diff(eq2_lin_swingup,theta);
+n42 = diff(eq2_lin_swingup,alpha);
+n43 = diff(eq2_lin_swingup,diff(theta,t));
+n44 = diff(eq2_lin_swingup,diff(alpha,t));
+
+p11 = 0;
+p21 = 0;
+p31 = diff(eq1_lin_swingup,Va);
+p41 = diff(eq2_lin_swingup,Va);
+
+M = [m11,m12,m13,m14;
+     m21,m22,m23,m24;
+     m31,m32,m33,m34;
+     m41,m42,m43,m44];
+N = [n11,n12,n13,n14;
+     n21,n22,n23,n24;
+     n31,n32,n33,n34;
+     n41,n42,n43,n44];
+P = [p11;
+     p21;
+     p31;
+     p41];
+
+
+A_swingup = M^(-1)*(-N);
+B_swingup = M^(-1)*(-P);
+C_swingup = [1,0,0,0;
+     0,1,0,0;
+     0,0,1,0;
+     0,0,0,1];
+D_swingup = [0;
+     0;
+     0;
+     0];
+
 %% data %%
 
 % mechanical parameters
@@ -171,9 +248,14 @@ Ra_ = 8.4; % armature resistance
 A = double(subs(A,[Lr lp Jr_ex mp Jp g Ke Kc Ra Br Bp],[Lr_ lp_ Jr_ex_ mp_ Jp_ g_ Ke_ Kc_ Ra_ Br_ Bp_]));
 B = double(subs(B,[Lr lp Jr_ex mp Jp g Ke Kc Ra Br Bp],[Lr_ lp_ Jr_ex_ mp_ Jp_ g_ Ke_ Kc_ Ra_ Br_ Bp_]));
 
+A_swingup = double(subs(A_swingup,[Lr lp Jr_ex mp Jp g Ke Kc Ra Br Bp],[Lr_ lp_ Jr_ex_ mp_ Jp_ g_ Ke_ Kc_ Ra_ Br_ Bp_]));
+B_swingup = double(subs(B_swingup,[Lr lp Jr_ex mp Jp g Ke Kc Ra Br Bp],[Lr_ lp_ Jr_ex_ mp_ Jp_ g_ Ke_ Kc_ Ra_ Br_ Bp_]));
+
 sys = ss(A,B,C,D)
+sys_swingup = ss(A_swingup,B_swingup,C_swingup,D_swingup)
 
 eigenvalues = eig(A)
+eigenvalues_swingup = eig(A_swingup)
 
 %% Transfer Function of the linearized system %%
 
@@ -189,23 +271,40 @@ close all
 rank(ctrb(A,B))     % == 4 so OK!
 
 % Desired poles
- P = [0.5+10.5i 0.5-10.5i -50 -100] ;
-% P = [-3, -3+4i, -3-4i, -115] ;
-K = place(A,B,P) ;
+P_swingup = [+0.5+10.5i +0.5-10.5i -50 -100] ;
+P_stab = [-0.8 -0.9 -30 -120] ;
+%P = [-0.7812+10.7987i -0.7812-10.7987i -1.0001 -110.10] ;  % LQR Poles
 
-syst_cl = tf(ss(A-B*K,B,C,D))
-figure
-% step(syst_cl)
-impulse(syst_cl)
-ss_gain = 1/dcgain(syst_cl) 
+% K Computation
+K = place(A,B,P_stab) ;
+K_swingup = place(A_swingup,B_swingup,P_swingup) ;
 
-%% MPC
+% syst_cl = tf(ss(A-B*K,B,C,D))
+% figure
+% % step(syst_cl)
+% impulse(syst_cl)
+% ss_gain = 1/dcgain(syst_cl) 
 
-% nx = 4;
-% ny = 1;
-% nu = 1;
-% nlobj = nlmpc(nx,ny,nu)
-% nlobj.Model.StateFcn = "QUBE2_Mechanical_Formulation";
-% nlobj.Model.IsContinuousTime = true;
-% nlobj.Model.OutputFcn = @(x,u,Ts) [x(1); x(3)];
+%% LQR %%
+close all
+Q = zeros(4) ;
+Q(1,1) = 100 ;   % q for theta
+Q(2,2) = 1 ;   % q for theta_dot
+Q(3,3) = 100 ;   % q for phi
+Q(4,4) = 1 ;   % q for phi_dot
+
+R = 10;
+Cq = sqrt(Q) ;
+
+rank(ctrb(A,B))     % == 4 so OK!
+rank(obsv(A,Cq))    % == 4 so ok!
+
+[K_lq S P] = lqr(A,B,Q,R) ;
+
+cl_lq = tf(ss(A-B*K_lq,B,C,D));
+eig(A-B*K_lq);
+figure;
+step(cl_lq);
+ss_gain = 1/dcgain(cl_lq); 
+close all;
 
