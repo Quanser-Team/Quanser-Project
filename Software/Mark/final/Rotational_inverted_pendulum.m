@@ -561,10 +561,15 @@ close all
 %small r == reliable measurment
 % Q_tilde > R_tilde == Fast Observer
 Q_tilde = zeros(4) ;
-Q_tilde(1,1) = 0.1 ;   % variance of the estimated theta
-Q_tilde(2,2) = 1 ;   % // theta_dot
-Q_tilde(3,3) = 0.1 ;   % // phi
-Q_tilde(4,4) = 1 ;   % // phi_dot
+% Q_tilde(1,1) = 0.08 ;   % variance of the estimated theta
+% Q_tilde(2,2) = 0.08 ;   % // theta_dot
+% Q_tilde(3,3) = 0.08 ;   % // phi
+% Q_tilde(4,4) = 0.08 ;   % // phi_dot
+
+Q_tilde(1,1) = 0.08 ;   % variance of the estimated theta
+Q_tilde(2,2) = 0.08 ;   % // theta_dot
+Q_tilde(3,3) = 0.08 ;   % // phi
+Q_tilde(4,4) = 0.08 ;   % // phi_dot
 
 R_tilde = zeros(2,2) ;    % R(p,p)
 R_tilde(1,1) = 0.001 ;   % measurments are reliable
@@ -596,10 +601,10 @@ close all
 %small r == reliable measurment
 % Q_tilde > R_tilde == Fast Observer
 Q_tilde_uns = zeros(4) ;
-Q_tilde_uns(1,1) = 0.1 ;   % variance of the estimated theta
-Q_tilde_uns(2,2) = 10 ;   % // theta_dot
-Q_tilde_uns(3,3) = 0.1 ;   % // phi
-Q_tilde_uns(4,4) = 10 ;   % // phi_dot
+Q_tilde_uns(1,1) = 0.08 ;   % variance of the estimated theta
+Q_tilde_uns(2,2) = 0.08 ;   % // theta_dot
+Q_tilde_uns(3,3) = 0.08 ;   % // phi
+Q_tilde_uns(4,4) = 0.08 ;   % // phi_dot
 
 R_tilde_uns = zeros(2,2) ;    % R(p,p)
 R_tilde_uns(1,1) = 0.001 ;   % measurments are reliable
@@ -622,7 +627,9 @@ pole(st_obs_lqr_syst_uns)
 close all
 disp("Observability condition")
 rank(obsv(A,C))  
-P_obsv = [-200 -300 -400 -500] ;
+P_obsv = [-200 -300 -400 -500] ;      % just faster poles wrt control
+% poles
+% P_obsv = [-1.2 -4.7-14.3i -4.7+14.3i -9.5] ;        % KF poles
 L_pp = place(A',C',P_obsv)' ;
 disp("desired State Observer poles:")
 eig(A-L_pp*C)
@@ -636,7 +643,9 @@ step(st_obs_pp_syst)
 close all
 disp("Observability condition")
 rank(obsv(A,C))  
-P_obsv_uns = [-200 -300 -400 -500] ;
+P_obsv_uns = [-200 -300 -400 -500] ;      % just faster poles wrt control
+% poles
+% P_obsv_uns = [-1.2 -4.7-14.3i -4.7+14.3i -9.5] ;        % KF poles
 L_pp_uns = place(A_uns',C_uns',P_obsv_uns)' ;
 disp("desired State Observer poles:")
 eig(A_uns-L_pp_uns*C_uns)
@@ -776,6 +785,7 @@ Bt = B*K_lq_track(1) ;
 figure
 step(At,Bt,C,D)
 title("Step Response of the Trajectory Tracking Control w/ LQR for theta")
+
 
 %% following code lines are for Pendulum damping coeff analisys
 
