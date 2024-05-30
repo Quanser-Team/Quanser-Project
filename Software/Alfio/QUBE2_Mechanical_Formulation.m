@@ -271,7 +271,7 @@ close all
 rank(ctrb(A,B))     % == 4 so OK!
 
 % Desired poles
-P_swingup = [+0.5+10.5i +0.5-10.5i -50 -100] ;
+P_swingup = [+1+20i +1-20i -50 -100] ;
 P_stab = [-0.8 -0.9 -30 -120] ;
 %P = [-0.7812+10.7987i -0.7812-10.7987i -1.0001 -110.10] ;  % LQR Poles
 
