@@ -326,34 +326,28 @@ pole(G_ol(1))   % see how many unstable poles
 num_theta = cell2mat(G_ol.Numerator(1,1))
 den_theta = cell2mat(G_ol.Denominator(1,1))
 
-% Filtered Derivative PID
-% Kp_theta = 30 ;
-% Ki_theta = 0 ;
-% Kd_theta = 5 ;
-% N_theta = 1000 ;   % where the D action is filtered
-
-Kp_theta = 0.9 ;
-Ki_theta = 0 ;
-Kd_theta = 0.25 ;
-N_theta = 100 ;   % where the D action is filtered
+Kp_theta_v2 = 0.9 ;
+Ki_theta_v2 = 0 ;
+Kd_theta_v2 = 0.25 ;
+N_theta_v2 = 100 ;   % where the D action is filtered
 
 s = tf('s') ;
-R_theta = Kp_theta + (Ki_theta/s) + (Kd_theta*N_theta/(1+(N_theta/s))) ;
+R_theta_v2 = Kp_theta_v2 + (Ki_theta_v2/s) + (Kd_theta_v2*N_theta_v2/(1+(N_theta_v2/s))) ;
 figure
-bode(R_theta)
+bode(R_theta_v2)
 title("Bode Diagram of the obtained Reg")
-L_theta = R_theta*G_ol(1);
+L_theta_v2 = R_theta_v2*G_ol(1);
 
 figure
-bode(L_theta)
+bode(L_theta_v2)
 title("Bode diagram of the Loop tf")
 
 figure
 %step(L/(1+L))
-step(feedback(R_theta*G_ol(1), 1))  % compact form
+step(feedback(R_theta_v2*G_ol(1), 1))  % compact form
 
 disp("closed loop poles:")
-pole(L_theta/(1+L_theta))
+pole(L_theta/(1+L_theta_v2))
 
 %% regolatore theta from scratch/trial & error %%
 %   phi = 180°   %
@@ -441,29 +435,23 @@ den_phi = cell2mat(G_t2p.Denominator)
 disp("theta to phi tf poles:")
 pole(G_t2p)     %see the poles
 
-% Kp_phi = 0.1 ;
-% Ki_phi = 6 ;
-% Kd_phi = 0 ;
-% 
-% N_phi = 1000 ;   % where the D action is filtered
+Kp_phi_v2 = 0 ;
+Ki_phi_v2 = 7 ;
+Kd_phi_v2 = 0 ;
 
-Kp_phi = 0 ;
-Ki_phi = 7 ;
-Kd_phi = 0 ;
-
-N_phi = 100 ;   % where the D action is filtered
+N_phi_v2 = 100 ;   % where the D action is filtered
 
 s = tf('s') ;
-R_phi = Kp_phi + (Ki_phi/s) + (Kd_phi*N_phi/(1+(N_phi/s))) ;
+R_phi_v2 = Kp_phi_v2 + (Ki_phi_v2/s) + (Kd_phi_v2*N_phi_v2/(1+(N_phi_v2/s))) ;
 figure
-bode(R_phi)
+bode(R_phi_v2)
 title("Bode Diagram of the obtained Reg")
 
 figure
-step(feedback(R_phi*G_t2p, 1))
+step(feedback(R_phi_v2*G_t2p, 1))
 
 disp("closed loop poles:")
-pole(feedback(R_phi*G_t2p,1))
+pole(feedback(R_phi_v2*G_t2p,1))
 
 %% Regolatore phi from scratch/trial & error %%
 %   phi = 180°   %
@@ -503,8 +491,10 @@ close all
 rank(ctrb(A,B))     % == 4 so OK!
 
 % Desired poles
-P = [-5 -50 -70 -80] ;  % veloce 0.8s
-% P = [-1 -1.2 -10 -20] ;     % phi is quick responsive, theta is sless but phi is mantained at 0
+P = [-2 -5.5 -7 -150] ;     % use this one
+% P = [-5 -5.2 -70 -80] ;
+% P = [-5 -5.2 -15 -115] ;
+% P = [-1 -3.5 -4 -150] ;
 K_pp = place(A,B,P) ;
 disp("desired poles:")
 eig(A-B*K_pp)
@@ -530,10 +520,10 @@ disp("Controllability condition")
 rank(ctrb(A_uns,B_uns))     % == 4 so OK!
 
 % Desired poles
-% P = [-1 -10 -30 -50] ;
-% P = [-5 -50 -70 -80] ;
-% P_uns = [-0.8 -0.9 -30 -120] ;    % last tried in lab 6/05
-P_uns = [-5 -5.2 -15 -120] ;        % try this one, it should be faster, maybe aggressive
+% P_uns = [-5 -5.2 -15 -115] ;
+% P_uns = [-0.8 -0.9 -30 -115] ;    %lqr poles
+P_uns = [-2 -2.2 -15 -115] ;        % use this one
+% P_uns = [-5 -5.2 -15 -50] ;
 
 K_pp_uns = place(A_uns,B_uns,P_uns) ;
 disp("desired poles:")
@@ -566,10 +556,10 @@ Q_tilde = zeros(4) ;
 % Q_tilde(3,3) = 0.08 ;   % // phi
 % Q_tilde(4,4) = 0.08 ;   % // phi_dot
 
-Q_tilde(1,1) = 0.08 ;   % variance of the estimated theta
-Q_tilde(2,2) = 0.08 ;   % // theta_dot
-Q_tilde(3,3) = 0.08 ;   % // phi
-Q_tilde(4,4) = 0.08 ;   % // phi_dot
+Q_tilde(1,1) = 1 ;   % variance of the estimated theta
+Q_tilde(2,2) = 1 ;   % // theta_dot
+Q_tilde(3,3) = 1 ;   % // phi
+Q_tilde(4,4) = 1 ;   % // phi_dot
 
 R_tilde = zeros(2,2) ;    % R(p,p)
 R_tilde(1,1) = 0.001 ;   % measurments are reliable
@@ -642,7 +632,7 @@ step(st_obs_pp_syst)
 %% STATE OBSERVER w/ POLE PLACEMENT 180° %%
 close all
 disp("Observability condition")
-rank(obsv(A,C))  
+rank(obsv(A_uns,C_uns))  
 P_obsv_uns = [-200 -300 -400 -500] ;      % just faster poles wrt control
 % poles
 % P_obsv_uns = [-1.2 -4.7-14.3i -4.7+14.3i -9.5] ;        % KF poles
@@ -657,13 +647,13 @@ step(st_obs_pp_syst_uns)
 %% LQR at phi = 0 deg %%
 close all
 Q = zeros(4) ;
-Q(1,1) = 100 ;   % q for theta
-Q(2,2) = 1 ;   % q for theta_dot
-Q(3,3) = 100 ;   % q for phi
-Q(4,4) = 1 ;   % q for phi_dot
+Q(1,1) = 10 ;   % q for theta
+Q(2,2) = 10 ;   % q for theta_dot
+Q(3,3) = 10 ;   % q for phi
+Q(4,4) = 10 ;   % q for phi_dot
 % NT: if you want theta to go to zero q must be = to the q for phi
 
-R = 0.01;
+R = 10;
 Cq = sqrt(Q) ;
 
 disp("Controllability and Observability Condition")
@@ -685,7 +675,7 @@ title("Bode Diagram of the stabilized syst w/ LQR")
 %% LQR at phi = 180 deg %%
 close all
 Q_uns = zeros(4) ;
-% 1st conig, nice and smooth
+% 1st config, nice and smooth
 Q_uns(1,1) = 10 ;   % q for theta
 Q_uns(2,2) = 1 ;   % q for theta_dot
 Q_uns(3,3) = 10 ;   % q for phi
@@ -693,13 +683,13 @@ Q_uns(4,4) = 10 ;   % q for phi_dot
 % NT: if you want theta to go to zero q must be at least = to the q for
 % phi
 
-% Q_uns(1,1) = 100 ;   % q for theta
-% Q_uns(2,2) = 1 ;   % q for theta_dot
-% Q_uns(3,3) = 100 ;   % q for phi
-% Q_uns(4,4) = 1 ;   % q for phi_dot
+% Q_uns(1,1) = 10 ;   % q for theta
+% Q_uns(2,2) = 10 ;   % q for theta_dot
+% Q_uns(3,3) = 10 ;   % q for phi
+% Q_uns(4,4) = 10 ;   % q for phi_dot
 
 R_uns = 1 ;
-% R_uns = 10 ;    % for the SW-up
+% R_uns = 10 ;    % for the SW-up and trajectory tracking
 Cq_uns = sqrt(Q_uns) ;
 
 disp("Controllability and Observability Condition")
@@ -720,14 +710,14 @@ title("Bode Diagram of the stabilized syst w/ LQR")
 %% LQR + TRAJECTORY TRACKING CONTROL phi = 180° %%
 close all
 Q_track_uns = zeros(4) ;
-Q_track_uns(1,1) = 100 ;   % q for theta
-Q_track_uns(2,2) = 1 ;   % q for theta_dot
+Q_track_uns(1,1) = 10 ;   % q for theta
+Q_track_uns(2,2) = 10 ;   % q for theta_dot
 Q_track_uns(3,3) = 10 ;   % q for phi
 Q_track_uns(4,4) = 10 ;   % q for phi_dot
 % NT: if you want theta to go to zero q must be at least = to the q for
 % phi
 
-R_track_uns = 1;
+R_track_uns = 10;
 Cq_track_uns = sqrt(Q_track_uns) ;
 
 disp("Controllability and Observability Condition")
@@ -756,13 +746,13 @@ title("Step Response of the Trajectory Tracking Control w/ LQR for theta")
 close all
 Q_track = zeros(4) ;
 Q_track(1,1) = 100 ;   % q for theta
-Q_track(2,2) = 1 ;   % q for theta_dot
-Q_track(3,3) = 10 ;   % q for phi
-Q_track(4,4) = 10 ;   % q for phi_dot
+Q_track(2,2) = 10 ;   % q for theta_dot
+Q_track(3,3) = 1 ;   % q for phi
+Q_track(4,4) = 1 ;   % q for phi_dot
 % NT: if you want theta to go to zero q must be at least = to the q for
 % phi
 
-R_track = 1;
+R_track = 10;
 Cq_track = sqrt(Q_track) ;
 
 disp("Controllability and Observability Condition")
